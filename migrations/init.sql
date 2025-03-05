@@ -26,6 +26,36 @@ BEGIN
 END;
 $$;
 
+
+CREATE OR REPLACE PROCEDURE create_user(
+    username VARCHAR(255),
+    password VARCHAR(255),
+    is_admin BOOLEAN
+)
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = username) THEN
+        RAISE EXCEPTION 'User % already exists', username;
+    END IF;
+
+    EXECUTE format(
+            'CREATE ROLE %I WITH LOGIN PASSWORD %L',
+            username,
+            password
+            );
+
+    IF is_admin THEN
+        EXECUTE format('GRANT admin TO %I', username);
+    ELSE
+        EXECUTE format('GRANT guest TO %I', username);
+    END IF;
+END;
+$$;
+
+ALTER PROCEDURE create_user OWNER TO postgres;
+
 CREATE OR REPLACE PROCEDURE clear_table()
     LANGUAGE plpgsql
 AS

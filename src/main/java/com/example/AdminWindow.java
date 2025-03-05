@@ -27,6 +27,7 @@ public class AdminWindow extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
 
         JPanel btnPanel = new JPanel();
+        btnPanel.add(createButton("Create User", this::createUser));
         btnPanel.add(createButton("Add", this::addLink));
         btnPanel.add(createButton("Update", this::updateLink));
         btnPanel.add(createButton("Delete", this::deleteLink));
@@ -74,6 +75,51 @@ public class AdminWindow extends JFrame {
             }
         };
         worker.execute();
+    }
+
+    private void createUser(ActionEvent e) {
+        JPanel panel = new JPanel(new GridLayout(3, 2));
+
+        JTextField usernameField = new JTextField();
+        JPasswordField passwordField = new JPasswordField();
+        JCheckBox adminCheckBox = new JCheckBox("Is Admin?");
+
+        panel.add(new JLabel("Username:"));
+        panel.add(usernameField);
+        panel.add(new JLabel("Password:"));
+        panel.add(passwordField);
+        panel.add(new JLabel("Admin Privileges:"));
+        panel.add(adminCheckBox);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                panel,
+                "Create User",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String username = usernameField.getText().trim();
+            String password = new String(passwordField.getPassword()).trim();
+            boolean isAdmin = adminCheckBox.isSelected();
+
+            if (username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill all fields!");
+                return;
+            }
+
+            try {
+                DatabaseConnector.executeProcedure(
+                        conn,
+                        "call create_user(?, ?, ?)",
+                        username, password, isAdmin
+                );
+                JOptionPane.showMessageDialog(this, "User created successfully!");
+            } catch (SQLException ex) {
+                showError(ex);
+            }
+        }
     }
 
     private void addLink(ActionEvent e) {
